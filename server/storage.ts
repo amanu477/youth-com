@@ -9,7 +9,7 @@ import {
   type Group, type InsertGroup,
   type GroupMember, type InsertGroupMember
 } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 
@@ -42,9 +42,8 @@ export interface IStorage {
   createGroup(group: InsertGroup): Promise<Group>;
   getGroups(): Promise<Group[]>;
   addGroupMember(groupMember: InsertGroupMember): Promise<GroupMember>;
+  updateGroupMemberStatus(id: number, status: string): Promise<GroupMember>;
   getGroupMembers(groupId: number): Promise<(GroupMember & { member: Member })[]>;
-  
-  // Session store helpers would go here if not using connect-pg-simple/memory-store directly
 }
 
 export class DatabaseStorage implements IStorage {
@@ -69,7 +68,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [newUser] = await db.insert(users).values(user).returning();
+    const [newUser] = await db.insert(users).values(user as any).returning();
     return newUser;
   }
   
@@ -151,7 +150,21 @@ export class DatabaseStorage implements IStorage {
 
   async addGroupMember(groupMember: InsertGroupMember): Promise<GroupMember> {
     const [newMember] = await db.insert(groupMembers).values(groupMember).returning();
+    
+    // Update member count
+    await db.update(groups)
+      .set({ memberCount: sql`member_count + 1` })
+      .where(eq(groups.id, groupMember.groupId));
+      
     return newMember;
+  }
+
+  async updateGroupMemberStatus(id: number, status: string): Promise<GroupMember> {
+    const [updated] = await db.update(groupMembers)
+      .set({ status })
+      .where(eq(groupMembers.id, id))
+      .returning();
+    return updated;
   }
 
   async getGroupMembers(groupId: number): Promise<(GroupMember & { member: Member })[]> {

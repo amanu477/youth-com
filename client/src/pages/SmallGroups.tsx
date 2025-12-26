@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertGroupSchema, type Group } from "@shared/schema";
+import { insertGroupSchema, type Group, type Member } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,12 +18,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Users, BookOpen } from "lucide-react";
+import { Users, BookOpen, Plus } from "lucide-react";
 import { z } from "zod";
+import { useTranslation } from "@/components/Navigation";
 
 export default function SmallGroups() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"browse" | "create">("browse");
   const [expandedGroupId, setExpandedGroupId] = useState<number | null>(null);
 
@@ -32,6 +34,7 @@ export default function SmallGroups() {
     defaultValues: {
       name: "",
       description: "",
+      imageUrl: "",
       leaderId: user?.id,
     },
   });
@@ -56,7 +59,7 @@ export default function SmallGroups() {
     enabled: !!expandedGroupId,
   });
 
-  // Create group mutation (admin only)
+  // Create group mutation (Now allowed for all members)
   const createMutation = useMutation({
     mutationFn: async (data: z.infer<typeof insertGroupSchema>) => {
       return apiRequest("POST", "/api/groups", data);
@@ -82,10 +85,13 @@ export default function SmallGroups() {
   // Join group mutation
   const joinMutation = useMutation({
     mutationFn: async (groupId: number) => {
+      if (!user) {
+        throw new Error("Please sign in to join groups.");
+      }
       // First, get current user's member profile
       const membersRes = await fetch("/api/members");
-      const members = await membersRes.json();
-      const userMember = members.find(
+      const membersList = await membersRes.json();
+      const userMember = membersList.find(
         (m: any) => m.userId === user?.id
       );
 
@@ -99,8 +105,8 @@ export default function SmallGroups() {
     },
     onSuccess: () => {
       toast({
-        title: "Success!",
-        description: "You've joined the group.",
+        title: "Request Sent!",
+        description: "Your request to join has been sent to the admin.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/groups"] });
       if (expandedGroupId) {
@@ -122,24 +128,6 @@ export default function SmallGroups() {
     createMutation.mutate(data);
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-50 pt-28 pb-12">
-        <div className="max-w-4xl mx-auto px-4">
-          <Card className="border-slate-200">
-            <CardContent className="pt-6 text-center">
-              <p className="text-slate-600">
-                Please log in to view and join small groups.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  const isAdmin = user.role !== "member";
-
   return (
     <div className="min-h-screen bg-slate-50 pt-28 pb-12">
       <div className="max-w-6xl mx-auto px-4">
@@ -148,11 +136,11 @@ export default function SmallGroups() {
           <div className="flex items-center gap-3 mb-2">
             <BookOpen className="w-8 h-8 text-purple-600" />
             <h1 className="text-4xl font-bold text-slate-900">
-              Bible Study Groups
+              {t.groups.title}
             </h1>
           </div>
           <p className="text-slate-600">
-            Join small groups to grow together and study God's word.
+            {t.groups.subtitle}
           </p>
         </div>
 
@@ -163,24 +151,24 @@ export default function SmallGroups() {
             onClick={() => setActiveTab("browse")}
             data-testid="button-browse-groups"
           >
-            Browse Groups
+            {t.groups.browse}
           </Button>
-          {isAdmin && (
+          {user && (
             <Button
               variant={activeTab === "create" ? "default" : "outline"}
               onClick={() => setActiveTab("create")}
               data-testid="button-create-group"
             >
-              Create Group
+              {t.groups.create}
             </Button>
           )}
         </div>
 
         {/* Create Group Tab */}
-        {activeTab === "create" && isAdmin && (
+        {activeTab === "create" && user && (
           <Card className="mb-8 border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Create New Small Group</CardTitle>
+              <CardTitle>{t.groups.create}</CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -199,6 +187,24 @@ export default function SmallGroups() {
                             placeholder="e.g., Genesis Study Group"
                             data-testid="input-group-name"
                             {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Image URL (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://..."
+                            {...field}
+                            value={field.value || ""}
                           />
                         </FormControl>
                         <FormMessage />
@@ -231,8 +237,8 @@ export default function SmallGroups() {
                     className="w-full"
                   >
                     {createMutation.isPending
-                      ? "Creating..."
-                      : "Create Group"}
+                      ? t.groups.creating
+                      : t.groups.create}
                   </Button>
                 </form>
               </Form>
@@ -246,14 +252,14 @@ export default function SmallGroups() {
             {isLoading ? (
               <Card className="border-slate-200">
                 <CardContent className="pt-6 text-center">
-                  <p className="text-slate-500">Loading groups...</p>
+                  <p className="text-slate-500">Loading...</p>
                 </CardContent>
               </Card>
             ) : groups.length === 0 ? (
               <Card className="border-slate-200">
                 <CardContent className="pt-6 text-center">
                   <p className="text-slate-500">
-                    No groups available yet. Check back soon!
+                    {t.groups.noGroups}
                   </p>
                 </CardContent>
               </Card>
@@ -262,7 +268,7 @@ export default function SmallGroups() {
                 {groups.map((group) => (
                   <Card
                     key={group.id}
-                    className="border-slate-200 hover-elevate cursor-pointer transition-all"
+                    className="border-slate-200 hover-elevate cursor-pointer transition-all overflow-hidden"
                     onClick={() =>
                       setExpandedGroupId(
                         expandedGroupId === group.id ? null : group.id
@@ -270,6 +276,15 @@ export default function SmallGroups() {
                     }
                     data-testid={`card-group-${group.id}`}
                   >
+                    {group.imageUrl && (
+                      <div className="w-full h-48 overflow-hidden">
+                        <img 
+                          src={group.imageUrl} 
+                          alt={group.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -278,7 +293,7 @@ export default function SmallGroups() {
                           </CardTitle>
                           <p className="text-sm text-slate-500 mt-2 flex items-center gap-1">
                             <Users className="w-4 h-4" />
-                            {groupMembers.length} members
+                            {group.memberCount} {t.groups.members}
                           </p>
                         </div>
                       </div>
@@ -301,7 +316,7 @@ export default function SmallGroups() {
                         data-testid={`button-join-group-${group.id}`}
                         className="w-full"
                       >
-                        {joinMutation.isPending ? "Joining..." : "Join Group"}
+                        {joinMutation.isPending ? t.groups.joining : t.groups.join}
                       </Button>
                     </CardContent>
 
@@ -309,11 +324,11 @@ export default function SmallGroups() {
                     {expandedGroupId === group.id && (
                       <div className="border-t border-slate-200 p-6 bg-slate-50">
                         <h4 className="font-bold text-slate-900 mb-4">
-                          Group Members
+                          {t.groups.groupMembers}
                         </h4>
                         {groupMembers.length === 0 ? (
                           <p className="text-slate-600 text-sm">
-                            No members yet. Be the first to join!
+                            {t.groups.beFirst}
                           </p>
                         ) : (
                           <div className="space-y-3">
@@ -334,6 +349,11 @@ export default function SmallGroups() {
                                     {gm.member.category}
                                   </p>
                                 </div>
+                                {gm.status === 'pending' && (
+                                  <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                    Pending
+                                  </span>
+                                )}
                               </div>
                             ))}
                           </div>

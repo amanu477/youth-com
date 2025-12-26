@@ -1,22 +1,44 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Shield, LogIn, User } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, Shield, LogIn, User, Languages } from "lucide-react";
+import { useState, createContext, useContext, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { translations } from "@/lib/translations";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+type Language = "en" | "am";
+const LanguageContext = createContext<{ lang: Language; setLang: (l: Language) => void }>({ lang: "en", setLang: () => {} });
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [lang, setLang] = useState<Language>(() => (localStorage.getItem("lang") as Language) || "en");
+  
+  useEffect(() => {
+    localStorage.setItem("lang", lang);
+  }, [lang]);
+
+  return <LanguageContext.Provider value={{ lang, setLang }}>{children}</LanguageContext.Provider>;
+}
+
+export const useTranslation = () => {
+  const { lang, setLang } = useContext(LanguageContext);
+  const t = translations[lang];
+  return { t, lang, setLang };
+};
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
   const { user, logout } = useAuth();
+  const { t, lang, setLang } = useTranslation();
 
   const navLinks = [
-    { href: "/", label: "Home" },
-    { href: "/announcements", label: "Announcements" },
-    { href: "/members", label: "Members" },
-    { href: "/groups", label: "Groups" },
-    { href: "/about", label: "About Us" },
-    { href: "/contact", label: "Contact Us" },
+    { href: "/", label: t.nav.home },
+    { href: "/announcements", label: t.nav.announcements },
+    ...(user ? [{ href: "/members", label: t.nav.members }] : []),
+    { href: "/groups", label: t.nav.groups },
+    { href: "/about", label: t.nav.about },
+    { href: "/contact", label: t.nav.contact },
   ];
 
   return (
@@ -47,23 +69,39 @@ export function Navigation() {
               </Link>
             ))}
 
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Languages className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setLang("en")} className={lang === "en" ? "bg-blue-50 text-primary font-bold" : ""}>
+                  English
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLang("am")} className={lang === "am" ? "bg-blue-50 text-primary font-bold" : ""}>
+                  አማርኛ
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {user ? (
               <div className="flex items-center gap-4 ml-4 pl-4 border-l border-slate-200">
                 <Link href={user.role === 'member' ? "/dashboard" : "/admin"}>
                   <Button variant="ghost" className="font-semibold text-slate-700">
                     {user.role === 'member' ? <User className="w-4 h-4 mr-2"/> : <Shield className="w-4 h-4 mr-2"/>}
-                    {user.role === 'member' ? "Dashboard" : "Admin"}
+                    {user.role === 'member' ? t.nav.dashboard : t.nav.admin}
                   </Button>
                 </Link>
                 <Button onClick={() => logout()} variant="outline" className="rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-white">
-                  Log Out
+                  {t.nav.logout}
                 </Button>
               </div>
             ) : (
               <Link href="/login">
                 <Button className="rounded-full px-6 bg-primary hover:bg-primary/90 shadow-lg shadow-blue-500/20">
                   <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
+                  {t.nav.signin}
                 </Button>
               </Link>
             )}

@@ -156,12 +156,19 @@ export async function registerRoutes(
   });
 
   app.post(api.groups.create.path, async (req, res) => {
-    if (!req.isAuthenticated() || req.user.role === 'member') {
+    if (!req.isAuthenticated()) {
       return res.status(403).json({ message: "Forbidden" });
     }
-    const input = api.groups.create.input.parse(req.body);
-    const group = await storage.createGroup(input);
-    res.status(201).json(group);
+    try {
+      const input = api.groups.create.input.parse(req.body);
+      const group = await storage.createGroup(input);
+      res.status(201).json(group);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
   });
 
   app.post(api.groups.addMember.path, async (req, res) => {
@@ -169,9 +176,19 @@ export async function registerRoutes(
     const { memberId } = req.body;
     const groupMember = await storage.addGroupMember({
       groupId: Number(req.params.id),
-      memberId: Number(memberId)
+      memberId: Number(memberId),
+      status: 'pending'
     });
     res.status(201).json(groupMember);
+  });
+
+  app.patch('/api/group-members/:id/status', async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role === 'member') {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    const { status } = req.body;
+    const updated = await storage.updateGroupMemberStatus(Number(req.params.id), status);
+    res.json(updated);
   });
 
   return httpServer;
