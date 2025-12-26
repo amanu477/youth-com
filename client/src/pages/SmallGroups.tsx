@@ -20,7 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Users, BookOpen, Plus } from "lucide-react";
 import { z } from "zod";
-import { useTranslation } from "@/components/Navigation";
+import { useTranslation } from "@/context/LanguageContext";
 
 export default function SmallGroups() {
   const { user } = useAuth();

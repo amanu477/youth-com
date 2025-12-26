@@ -2,29 +2,11 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Shield, LogIn, User, Languages } from "lucide-react";
-import { useState, createContext, useContext, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { translations } from "@/lib/translations";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
-type Language = "en" | "am";
-const LanguageContext = createContext<{ lang: Language; setLang: (l: Language) => void }>({ lang: "en", setLang: () => {} });
-
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useState<Language>(() => (localStorage.getItem("lang") as Language) || "en");
-  
-  useEffect(() => {
-    localStorage.setItem("lang", lang);
-  }, [lang]);
-
-  return <LanguageContext.Provider value={{ lang, setLang }}>{children}</LanguageContext.Provider>;
-}
-
-export const useTranslation = () => {
-  const { lang, setLang } = useContext(LanguageContext);
-  const t = translations[lang];
-  return { t, lang, setLang };
-};
+import { useTranslation } from "@/context/LanguageContext";
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);

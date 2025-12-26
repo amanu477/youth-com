@@ -12,7 +12,7 @@ import { MessageSquare, Calendar, User, Plus, Image as ImageIcon } from "lucide-
 import { format } from "date-fns";
 import { useState } from "react";
 import { z } from "zod";
-import { useTranslation } from "@/components/Navigation";
+import { useTranslation } from "@/context/LanguageContext";
 
 export default function Announcements() {
   const { announcements, isLoading, createAnnouncement } = useAnnouncements();
