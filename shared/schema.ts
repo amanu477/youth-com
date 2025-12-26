@@ -30,6 +30,7 @@ export const announcements = pgTable("announcements", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   content: text("content").notNull(),
+  imageUrl: text("image_url"),
   authorId: integer("author_id").references(() => users.id).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -47,7 +48,9 @@ export const groups = pgTable("groups", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),
+  imageUrl: text("image_url"),
   leaderId: integer("leader_id").references(() => users.id),
+  memberCount: integer("member_count").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -55,6 +58,7 @@ export const groupMembers = pgTable("group_members", {
   id: serial("id").primaryKey(),
   groupId: integer("group_id").references(() => groups.id).notNull(),
   memberId: integer("member_id").references(() => members.id).notNull(),
+  status: text("status").notNull().default("pending"), // 'pending', 'approved'
   joinedAt: timestamp("joined_at").defaultNow(),
 });
 
