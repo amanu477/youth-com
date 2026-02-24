@@ -50,13 +50,22 @@ export default function MemberDetail() {
       phone: member?.phone || "",
       address: member?.address || "",
       imageUrl: member?.imageUrl || "",
+      userId: member?.userId ?? undefined,
     },
   });
 
   // Update form values when member data is loaded
   useEffect(() => {
     if (member) {
-      form.reset(member);
+      form.reset({
+        fullName: member.fullName,
+        category: member.category,
+        email: member.email || "",
+        phone: member.phone || "",
+        address: member.address || "",
+        imageUrl: member.imageUrl || "",
+        userId: member.userId ?? undefined,
+      });
     }
   }, [member, form]);
 
@@ -116,15 +125,15 @@ export default function MemberDetail() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit((data) => updateMutation.mutate(data))} className="space-y-4">
                   <FormField control={form.control} name="fullName" render={({ field }) => (
-                    <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="imageUrl" render={({ field }) => (
-                    <FormItem><FormLabel>Profile Picture URL</FormLabel><FormControl><Input {...field} placeholder="https://..." /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Profile Picture URL</FormLabel><FormControl><Input {...field} placeholder="https://..." value={field.value || ""} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="category" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value || "youth"}>
                         <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                         <SelectContent>
                           <SelectItem value="children">Children</SelectItem>
@@ -135,13 +144,13 @@ export default function MemberDetail() {
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="email" render={({ field }) => (
-                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Email</FormLabel><FormControl><Input {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="phone" render={({ field }) => (
-                    <FormItem><FormLabel>Phone</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Phone</FormLabel><FormControl><Input {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="address" render={({ field }) => (
-                    <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} value={field.value || ""} /></FormControl><FormMessage /></FormItem>
                   )} />
                   <div className="flex gap-2 justify-end">
                     <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
