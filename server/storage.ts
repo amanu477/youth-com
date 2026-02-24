@@ -29,6 +29,8 @@ export interface IStorage {
   getMember(id: number): Promise<Member | undefined>;
   getMemberByUserId(userId: number): Promise<Member | undefined>;
   getMembers(search?: string): Promise<Member[]>;
+  updateMember(id: number, member: Partial<InsertMember>): Promise<Member>;
+  deleteMember(id: number): Promise<void>;
 
   // Announcements
   createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
@@ -103,6 +105,19 @@ export class DatabaseStorage implements IStorage {
   async getMembers(search?: string): Promise<Member[]> {
     // Returns all members - filtering happens on frontend for simplicity
     return await db.select().from(members);
+  }
+
+  async updateMember(id: number, member: Partial<InsertMember>): Promise<Member> {
+    const [updated] = await db.update(members)
+      .set(member)
+      .where(eq(members.id, id))
+      .returning();
+    if (!updated) throw new Error("Member not found");
+    return updated;
+  }
+
+  async deleteMember(id: number): Promise<void> {
+    await db.delete(members).where(eq(members.id, id));
   }
 
   // Announcements

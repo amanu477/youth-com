@@ -23,6 +23,7 @@ export const members = pgTable("members", {
   email: text("email"),
   phone: text("phone"),
   address: text("address"),
+  imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

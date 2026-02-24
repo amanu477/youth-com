@@ -99,6 +99,30 @@ export async function registerRoutes(
     res.json(member);
   });
 
+  app.patch(api.members.update.path, async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role === 'member') {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    try {
+      const input = api.members.update.input.parse(req.body);
+      const member = await storage.updateMember(Number(req.params.id), input);
+      res.json(member);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.delete(api.members.delete.path, async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role === 'member') {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    await storage.deleteMember(Number(req.params.id));
+    res.sendStatus(200);
+  });
+
   // === ANNOUNCEMENT Routes ===
   app.get(api.announcements.list.path, async (req, res) => {
     const announcements = await storage.getAnnouncements();

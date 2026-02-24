@@ -119,6 +119,26 @@ export const api = {
         404: errorSchemas.notFound,
       },
     },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/members/:id',
+      input: insertMemberSchema.partial(),
+      responses: {
+        200: z.custom<typeof members.$inferSelect>(),
+        400: errorSchemas.validation,
+        403: errorSchemas.forbidden,
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/members/:id',
+      responses: {
+        200: z.void(),
+        403: errorSchemas.forbidden,
+        404: errorSchemas.notFound,
+      },
+    },
   },
   announcements: {
     list: {
