@@ -25,8 +25,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Search } from "lucide-react";
+import { Users, Search, User as UserIcon } from "lucide-react";
 import { z } from "zod";
+import { Link } from "wouter";
 
 const createMemberSchema = insertMemberSchema;
 
@@ -45,6 +46,7 @@ export default function Members() {
       email: "",
       phone: "",
       address: "",
+      imageUrl: "",
       userId: user?.id,
     },
   });
@@ -174,6 +176,24 @@ export default function Members() {
                           <Input
                             placeholder="John Doe"
                             data-testid="input-fullname"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Profile Picture URL</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://images.unsplash.com/..."
+                            data-testid="input-imageurl"
                             {...field}
                           />
                         </FormControl>
@@ -386,43 +406,49 @@ function MemberCard({ member }: { member: Member }) {
   };
 
   return (
-    <Card
-      className="border-slate-200 hover-elevate"
-      data-testid={`card-member-${member.id}`}
-    >
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h3 className="font-bold text-lg text-slate-900" data-testid={`text-name-${member.id}`}>
-              {member.fullName}
-            </h3>
-            <span
-              className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 capitalize ${categoryColors[member.category as keyof typeof categoryColors]}`}
-              data-testid={`badge-category-${member.id}`}
-            >
-              {member.category}
-            </span>
+    <Link href={`/members/${member.id}`}>
+      <Card
+        className="border-slate-200 hover-elevate cursor-pointer h-full"
+        data-testid={`card-member-${member.id}`}
+      >
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-slate-100 border border-slate-200">
+              {member.imageUrl ? (
+                <img src={member.imageUrl} alt={member.fullName} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <UserIcon className="w-6 h-6 text-slate-300" />
+                </div>
+              )}
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-slate-900" data-testid={`text-name-${member.id}`}>
+                {member.fullName}
+              </h3>
+              <span
+                className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-1 capitalize ${categoryColors[member.category as keyof typeof categoryColors]}`}
+                data-testid={`badge-category-${member.id}`}
+              >
+                {member.category}
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-2 text-sm">
-          {member.email && (
-            <p className="text-slate-600" data-testid={`text-email-${member.id}`}>
-              <span className="font-medium">Email:</span> {member.email}
-            </p>
-          )}
-          {member.phone && (
-            <p className="text-slate-600" data-testid={`text-phone-${member.id}`}>
-              <span className="font-medium">Phone:</span> {member.phone}
-            </p>
-          )}
-          {member.address && (
-            <p className="text-slate-600 line-clamp-2" data-testid={`text-address-${member.id}`}>
-              <span className="font-medium">Address:</span> {member.address}
-            </p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+          <div className="space-y-2 text-sm">
+            {member.email && (
+              <p className="text-slate-600 truncate" data-testid={`text-email-${member.id}`}>
+                <span className="font-medium">Email:</span> {member.email}
+              </p>
+            )}
+            {member.phone && (
+              <p className="text-slate-600" data-testid={`text-phone-${member.id}`}>
+                <span className="font-medium">Phone:</span> {member.phone}
+              </p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

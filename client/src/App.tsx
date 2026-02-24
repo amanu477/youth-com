@@ -16,6 +16,7 @@ import Announcements from "@/pages/Announcements";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import Members from "@/pages/Members";
+import MemberDetail from "@/pages/MemberDetail";
 import SmallGroups from "@/pages/SmallGroups";
 
 function Router() {
@@ -30,6 +31,7 @@ function Router() {
           <Route path="/admin" component={Admin} />
           <Route path="/announcements" component={Announcements} />
           <Route path="/members" component={Members} />
+          <Route path="/members/:id" component={MemberDetail} />
           <Route path="/groups" component={SmallGroups} />
           <Route path="/about" component={About} />
           <Route path="/contact" component={Contact} />
